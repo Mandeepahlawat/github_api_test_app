@@ -22,7 +22,6 @@ class User < ActiveRecord::Base
 			total_commits = []
 			public_repos.each do |repo|
 				commits = get_activity_for_repo(git, repo, username)
-				debugger
 				total_commits << commits
 			end
 			total_commits.inject(:+)
@@ -41,9 +40,8 @@ class User < ActiveRecord::Base
 		git 						= initialize_github
 		if git.check_user_exists(username)
 			total_commits = get_last_one_year_commits(git, username)
-			debugger
 			user 					= User.find_or_initialize_by(username: username)
-			user.total_commits_last_year = total_commits
+			user.total_commits_last_year = total_commits if total_commits
 			user.save
 		else
 			false
