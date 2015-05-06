@@ -1,0 +1,13 @@
+%h2 Enter Github usernames to find their total number of public commits over the past one year
+
+#errors
+
+= form_for @user, remote: true do |f|
+	= f.text_field :username
+	= f.submit "Find Commits"
+
+
+#list-users
+	= render partial: "users/result", locals: {user: @users}
+
+= loader

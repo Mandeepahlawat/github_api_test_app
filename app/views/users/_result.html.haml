@@ -1,0 +1,5 @@
+Results:
+- if @users
+	- @users.each do |u|
+		.user-block
+			= "#{u.username}: #{u.total_commits_last_year}"
