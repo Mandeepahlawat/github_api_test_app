@@ -22,16 +22,19 @@ module SampleGithubApp
     end
 
     # get all public repos for a username
-    def get_public_repos(username)
-      resp = self.class.get("/users/#{username}/repos", @options)
-      return (resp.code == 200 ? resp.parsed_response : false)
+    def get_public_repos(username, next_url=nil)
+      resp   = self.class.get(next_url, @options) if next_url
+      resp ||= self.class.get("/users/#{username}/repos", @options)
+      return (resp.code == 200 ? resp : false)
     end
 
     #get user commits in last one year for a particular repo
-    def get_last_year_activity(username, repo)
-      resp = self.class.get("/repos/#{username}/#{repo}/stats/commit_activity", @options)
-      # If the data hasn’t been cached github sends response 202 
-      resp = self.class.get("/repos/#{username}/#{repo}/stats/commit_activity", @options) if resp.code == 202 
+    def get_last_year_commits(username, repo)
+      resp = self.class.get("/repos/#{username}/#{repo}/stats/participation", @options)
+      # If the data hasn’t been cached github sends response 202
+      if resp.code == 202
+        get_last_year_commits(username, repo)
+      end
       return (resp.code == 200 ? resp.parsed_response : false)
     end
   end 

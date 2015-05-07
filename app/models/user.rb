@@ -1,23 +1,36 @@
 class User < ActiveRecord::Base
+
 	validates :username, uniqueness: true
 
 	default_scope { order(total_commits_last_year: :desc) }
 
 	#get public repos for a username
-	def self.get_public_repos(git, username)
-		resp 					= git.get_public_repos(username)
-		resp ? resp.collect{|repo| repo["name"]}  : false
+	def self.get_public_repos(git, username, public_repos=nil, next_url=nil)
+		public_repos  	||= []
+		resp 							= git.get_public_repos(username, next_url)
+		if resp
+			resp.each{|repo| public_repos <<  repo["name"]}  #add all repo names in public repo array
+			if resp.headers["link"] #if pagination link present
+				next_url 			= resp.headers["link"].split("\;").first.gsub!(/[<>]/,"")
+				get_public_repos(git, username, public_repos, next_url) if (next_url.split("?page=")[1] != "1") #call method only if pagination link not equal to 1
+			end
+		end
+		return public_repos
+	end
+
+	def self.fetch_all_public_repos(git, username)
+		get_public_repos(git, username)
 	end
 
 	#get activity for a particular repo and username
 	def self.get_activity_for_repo(git, repo, username)
-		resp 					= git.get_last_year_activity(username, repo)
-		resp ? resp.collect{|c| c["total"]}.inject(:+) : 0
+		resp						= git.get_last_year_commits(username, repo)
+		resp ? resp["owner"].inject(:+) : 0
 	end
 
 	#get last one year commits for all public repos
 	def self.get_last_one_year_commits(git,username)
-		public_repos 	= get_public_repos(git, username)
+		public_repos 	= fetch_all_public_repos(git, username)
 		if public_repos.present?
 			total_commits = []
 			public_repos.each do |repo|
